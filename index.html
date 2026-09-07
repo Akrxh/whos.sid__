@@ -1,0 +1,601 @@
+<!DOCTYPE html> 
+<html lang="en"> 
+<head> 
+  <meta charset="UTF-8"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+  <title>Sid (@whos.sid__)</title> 
+  <style> 
+    * { 
+      margin: 0; 
+      padding: 0; 
+      box-sizing: border-box; 
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+    } 
+
+    body { 
+      background-color: #000; 
+      color: #fff; 
+      min-height: 100vh; 
+      display: flex; 
+      justify-content: center; 
+      align-items: center; 
+      overflow-x: hidden; 
+    } 
+
+    /* STEP 1: ORBITAL LOADING SCREEN */ 
+    #step-loading { 
+      position: fixed; 
+      inset: 0; 
+      background: #000; 
+      display: flex; 
+      justify-content: center; 
+      align-items: center; 
+      z-index: 1000; 
+      opacity: 1; 
+      transition: opacity 0.8s ease-in-out; 
+    } 
+
+    .orbital-container { 
+      position: relative; 
+      width: 320px; 
+      height: 320px; 
+      display: flex; 
+      justify-content: center; 
+      align-items: center; 
+    } 
+
+    .center-node { 
+      position: absolute; 
+      width: 28px; 
+      height: 28px; 
+      background-color: #fff; 
+      border-radius: 50%; 
+      box-shadow: 0 0 20px 6px rgba(255, 255, 255, 0.9), 
+                  0 0 50px 15px rgba(255, 255, 255, 0.5), 
+                  0 0 80px 25px rgba(255, 255, 255, 0.2); 
+      z-index: 10; 
+    } 
+
+    .linear-stage { 
+      position: absolute; 
+      width: 280px; 
+      height: 60px; 
+      display: flex; 
+      justify-content: center; 
+      align-items: center; 
+      animation: stage1Sequence 4s ease-in-out forwards; 
+    } 
+
+    .line-axis { 
+      position: absolute; 
+      width: 100%; 
+      height: 2px; 
+      background-color: rgba(255, 255, 255, 0.8); 
+    } 
+
+    .node-left, .node-right { 
+      position: absolute; 
+      width: 32px; 
+      height: 32px; 
+      border: 2px solid #fff; 
+      border-radius: 50%; 
+      background: #000; 
+      display: flex; 
+      justify-content: center; 
+      align-items: center; 
+    } 
+
+    .node-left { left: 0; } 
+    .node-right { right: 0; } 
+
+    .concentric-ring { 
+      position: absolute; 
+      width: 52px; 
+      height: 52px; 
+      border: 1px solid rgba(255, 255, 255, 0.5); 
+      border-radius: 50%; 
+      animation: pulseRing 1.2s infinite alternate cubic-bezier(0.45, 0, 0.55, 1); 
+    } 
+
+    .ring-right { right: -10px; } 
+
+    .radial-stage { 
+      position: absolute; 
+      width: 260px; 
+      height: 260px; 
+      opacity: 0; 
+      transform: scale(0.7); 
+      animation: stage2Sequence 6s 3.8s infinite cubic-bezier(0.4, 0, 0.2, 1); 
+    } 
+
+    .rotating-arm-container { 
+      position: absolute; 
+      top: 50%; 
+      left: 50%; 
+      width: 0; 
+      height: 0; 
+      transform-origin: 0 0; 
+      animation: spinArm 4s linear infinite; 
+    } 
+
+    .arm { 
+      position: absolute; 
+      width: 110px; 
+      height: 2px; 
+      background: linear-gradient(90deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.3) 100%); 
+      transform-origin: left center; 
+    } 
+
+    .radial-node { 
+      position: absolute; 
+      width: 26px; 
+      height: 26px; 
+      border: 2px solid rgba(255, 255, 255, 0.8); 
+      border-radius: 50%; 
+      background-color: #000; 
+      transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease; 
+      margin-top: -13px; 
+      margin-left: -13px; 
+    } 
+
+    .r-node-0 { top: 20px;  left: 130px; } 
+    .r-node-1 { top: 52px;  left: 208px; } 
+    .r-node-2 { top: 130px; left: 240px; } 
+    .r-node-3 { top: 208px; left: 208px; } 
+    .r-node-4 { top: 240px; left: 130px; } 
+    .r-node-5 { top: 208px; left: 52px;  } 
+    .r-node-6 { top: 130px; left: 20px;  } 
+    .r-node-7 { top: 52px;  left: 52px;  } 
+
+    .radial-node.active { 
+      background-color: #fff; 
+      box-shadow: 0 0 18px 5px rgba(255, 255, 255, 0.95); 
+      transform: scale(1.15); 
+    } 
+
+    @keyframes pulseRing { 
+      0% { transform: scale(0.85); opacity: 0.3; } 
+      100% { transform: scale(1.15); opacity: 0.9; } 
+    } 
+
+    @keyframes stage1Sequence { 
+      0% { opacity: 0; transform: scaleX(0.5); } 
+      15% { opacity: 1; transform: scaleX(1); } 
+      75% { opacity: 1; transform: scaleX(1); } 
+      90% { opacity: 0; transform: scaleX(0.2); } 
+      100% { opacity: 0; transform: scaleX(0); } 
+    } 
+
+    @keyframes stage2Sequence { 
+      0% { opacity: 0; transform: scale(0.6) rotate(-20deg); } 
+      15% { opacity: 1; transform: scale(1) rotate(0deg); } 
+      85% { opacity: 1; transform: scale(1) rotate(0deg); } 
+      100% { opacity: 0; transform: scale(1.15) rotate(10deg); } 
+    } 
+
+    @keyframes spinArm { 
+      0% { transform: rotate(0deg); } 
+      100% { transform: rotate(360deg); } 
+    } 
+
+    /* STEP 2: PILL CAPSULES BACKGROUND */ 
+    #step-capsules { 
+      position: fixed; 
+      inset: 0; 
+      background: url('./1000121578.jpg') center center / cover no-repeat #000; 
+      z-index: 900; 
+      opacity: 0; 
+      pointer-events: none; 
+      transition: opacity 0.8s ease-in-out; 
+    } 
+
+    #step-capsules.active { 
+      opacity: 1; 
+    } 
+
+    /* STEP 3: RED GLASSMORPHIC WELCOME SCREEN */ 
+    #step-transition { 
+      position: fixed; 
+      inset: 0; 
+      background: url('./1000121588.jpg') center center / cover no-repeat #000; 
+      display: flex; 
+      justify-content: center; 
+      align-items: center; 
+      z-index: 950; 
+      opacity: 0; 
+      pointer-events: none; 
+      transition: opacity 0.6s ease-in-out, transform 0.6s ease-in-out; 
+      transform: scale(0.96); 
+    } 
+
+    #step-transition.active { 
+      opacity: 1; 
+      transform: scale(1); 
+    } 
+
+    .glass-welcome-card { 
+      width: 300px; 
+      padding: 32px 24px; 
+      border-radius: 28px; 
+      background: rgba(255, 255, 255, 0.08); 
+      backdrop-filter: blur(20px); 
+      -webkit-backdrop-filter: blur(20px); 
+      border: 1px solid rgba(255, 255, 255, 0.2); 
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6); 
+      display: flex; 
+      flex-direction: column; 
+      gap: 36px; 
+    } 
+
+    .glass-card-top { 
+      display: flex; 
+      justify-content: space-between; 
+      font-size: 11px; 
+      color: rgba(255, 255, 255, 0.7); 
+      letter-spacing: 0.5px; 
+      line-height: 1.3; 
+    } 
+
+    .glass-card-body h2 { 
+      font-size: 36px; 
+      font-weight: 800; 
+      line-height: 1.15; 
+      color: #fff; 
+      letter-spacing: -0.5px; 
+    } 
+
+    .glass-card-bottom { 
+      font-size: 12px; 
+      color: rgba(255, 255, 255, 0.8); 
+      font-weight: 500; 
+    } 
+
+    /* STEP 4: MAIN INTERFACE */ 
+    .app-container { 
+      width: 100%; 
+      max-width: 480px; 
+      min-height: 100vh; 
+      background: url('./1000121612.jpg') center top / cover no-repeat #000; 
+      position: relative; 
+      display: flex; 
+      flex-direction: column; 
+      justify-content: flex-end; 
+    } 
+
+    .top-bar { 
+      position: absolute; 
+      top: 16px; 
+      left: 16px; 
+      right: 16px; 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      z-index: 10; 
+    } 
+
+    .icon-btn-blur { 
+      width: 36px; 
+      height: 36px; 
+      border-radius: 50%; 
+      background: rgba(0, 0, 0, 0.4); 
+      backdrop-filter: blur(10px); 
+      -webkit-backdrop-filter: blur(10px); 
+      border: 1px solid rgba(255, 255, 255, 0.15); 
+      color: #fff; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      font-size: 16px; 
+      cursor: pointer; 
+      text-decoration: none; 
+    } 
+
+    .profile-pill-tag { 
+      padding: 6px 16px; 
+      border-radius: 20px; 
+      background: rgba(0, 0, 0, 0.4); 
+      backdrop-filter: blur(10px); 
+      -webkit-backdrop-filter: blur(10px); 
+      border: 1px solid rgba(255, 255, 255, 0.15); 
+      color: #fff; 
+      font-size: 11px; 
+      font-weight: 700; 
+      letter-spacing: 1px; 
+    } 
+
+    .bottom-sheet-card { 
+      width: 100%; 
+      background: rgba(14, 14, 16, 0.82); 
+      backdrop-filter: blur(24px); 
+      -webkit-backdrop-filter: blur(24px); 
+      border-top-left-radius: 32px; 
+      border-top-right-radius: 32px; 
+      border-top: 1px solid rgba(255, 255, 255, 0.12); 
+      padding: 24px 20px 32px; 
+      display: flex; 
+      flex-direction: column; 
+      box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.8); 
+      position: relative; 
+    } 
+
+    .profile-header-row { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: flex-start; 
+      margin-bottom: 4px; 
+    } 
+
+    .profile-identity-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .pfp-avatar {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid rgba(255, 255, 255, 0.25);
+      box-shadow: 0 0 12px rgba(0, 0, 0, 0.5);
+    }
+
+    .profile-title-container h1 { 
+      font-size: 26px; 
+      font-weight: 800; 
+      letter-spacing: 0.5px; 
+      line-height: 1.1; 
+      text-transform: uppercase; 
+    } 
+
+    .profile-title-container p { 
+      font-size: 13px; 
+      color: #a0a0a0; 
+      letter-spacing: 1px; 
+      margin-top: 2px; 
+    } 
+
+    .action-icons-group { 
+      display: flex; 
+      align-items: center; 
+      gap: 10px; 
+    } 
+
+    .sparkle-icon { 
+      width: 36px; 
+      height: 36px; 
+      border-radius: 50%; 
+      background: radial-gradient(circle, #a855f7 0%, #6366f1 100%); 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      box-shadow: 0 0 12px rgba(168, 85, 247, 0.5); 
+    } 
+
+    .profile-handle-sub { 
+      font-size: 13px; 
+      color: #71717a; 
+      margin-bottom: 12px; 
+    } 
+
+    .profile-bio-text { 
+      font-size: 13px; 
+      line-height: 1.45; 
+      color: #e4e4e7; 
+      margin-bottom: 20px; 
+    } 
+
+    .stats-row { 
+      display: flex; 
+      justify-content: space-around; 
+      align-items: center; 
+      margin-bottom: 24px; 
+      padding: 0 10px; 
+    } 
+
+    .stat-item { 
+      text-align: center; 
+    } 
+
+    .stat-num { 
+      font-size: 20px; 
+      font-weight: 700; 
+      color: #fff; 
+    } 
+
+    .stat-lbl { 
+      font-size: 12px; 
+      color: #8e8e8e; 
+      margin-top: 2px; 
+    } 
+
+    .buttons-row { 
+      display: flex; 
+      gap: 12px; 
+    } 
+
+    .btn-primary-purple { 
+      flex: 1; 
+      background: linear-gradient(135deg, #a855f7 0%, #6366f1 100%); 
+      color: #fff; 
+      border: none; 
+      padding: 12px; 
+      border-radius: 22px; 
+      font-weight: 600; 
+      font-size: 14px; 
+      text-decoration: none; 
+      text-align: center; 
+      box-shadow: 0 4px 16px rgba(168, 85, 247, 0.3); 
+      transition: opacity 0.2s ease; 
+    } 
+
+    .btn-secondary-dark { 
+      flex: 1; 
+      background: rgba(255, 255, 255, 0.08); 
+      border: 1px solid rgba(255, 255, 255, 0.12); 
+      color: #fff; 
+      padding: 12px; 
+      border-radius: 22px; 
+      font-weight: 600; 
+      font-size: 14px; 
+      text-decoration: none; 
+      text-align: center; 
+      transition: background 0.2s ease; 
+    } 
+  </style> 
+</head> 
+<body> 
+
+  <div id="step-loading"> 
+    <div class="orbital-container"> 
+      <div class="center-node"></div> 
+      <div class="linear-stage"> 
+        <div class="line-axis"></div> 
+        <div class="node-left"></div> 
+        <div class="node-right"> 
+          <div class="concentric-ring ring-right"></div> 
+        </div> 
+      </div> 
+      <div class="radial-stage"> 
+        <div class="rotating-arm-container"> 
+          <div class="arm"></div> 
+        </div> 
+        <div class="radial-node r-node-0"></div> 
+        <div class="radial-node r-node-1"></div> 
+        <div class="radial-node r-node-2"></div> 
+        <div class="radial-node r-node-3"></div> 
+        <div class="radial-node r-node-4"></div> 
+        <div class="radial-node r-node-5"></div> 
+        <div class="radial-node r-node-6"></div> 
+        <div class="radial-node r-node-7"></div> 
+      </div> 
+    </div> 
+  </div> 
+
+  <div id="step-capsules"></div> 
+
+  <div id="step-transition"> 
+    <div class="glass-welcome-card"> 
+      <div class="glass-card-top"> 
+        <div>Glass<br>morphic effect</div> 
+        <div>Let's create</div> 
+      </div> 
+      <div class="glass-card-body"> 
+        <h2>Hello,<br>I'm Sid.</h2> 
+      </div> 
+      <div class="glass-card-bottom"> 
+        @whos.sid__ 
+      </div> 
+    </div> 
+  </div> 
+
+  <div class="app-container"> 
+    <div class="top-bar"> 
+      <button class="icon-btn-blur" id="refresh-btn" title="Replay Animation">‹</button> 
+      <div class="profile-pill-tag">PROFILE</div> 
+    </div> 
+
+    <div class="bottom-sheet-card"> 
+      <div class="profile-header-row"> 
+        <div class="profile-identity-wrapper">
+          <img src="./profile.jpg" alt="Sid Profile Picture" class="pfp-avatar">
+          <div class="profile-title-container"> 
+            <h1>SID</h1> 
+            <p>W H O S . S I D __</p> 
+          </div> 
+        </div>
+        <div class="action-icons-group"> 
+          <div class="sparkle-icon">✦</div> 
+          <a href="mailto:ayu330061@gmail.com" class="icon-btn-blur" title="Email Sid">✉</a> 
+        </div> 
+      </div> 
+
+      <div class="profile-handle-sub">@whos.sid__</div> 
+
+      <div class="profile-bio-text"> 
+        In this world only those worthy of justice remain. And I alone decide who that is. ✨ 
+      </div> 
+
+      <div class="stats-row"> 
+        <div class="stat-item"> 
+          <div class="stat-num" id="posts-count">--</div> 
+          <div class="stat-lbl">Posts</div> 
+        </div> 
+        <div class="stat-item"> 
+          <div class="stat-num" id="followers-count">--</div> 
+          <div class="stat-lbl">Followers</div> 
+        </div> 
+        <div class="stat-item"> 
+          <div class="stat-num" id="following-count">--</div> 
+          <div class="stat-lbl">Following</div> 
+        </div> 
+      </div> 
+
+      <div class="buttons-row"> 
+        <a href="https://www.instagram.com/whos.sid__?stkn=MW1nbDJmemJ0eXRmeg==" target="_blank" class="btn-primary-purple">Follow</a> 
+        <a href="https://pin.it/24RP1ckjO" target="_blank" class="btn-secondary-dark">Pinterest</a> 
+      </div> 
+    </div> 
+  </div> 
+
+  <script> 
+    const radialNodes = document.querySelectorAll('.radial-node'); 
+    let nodeIndex = 2; 
+    setInterval(() => { 
+      radialNodes.forEach(node => node.classList.remove('active')); 
+      if (radialNodes[nodeIndex]) { 
+        radialNodes[nodeIndex].classList.add('active'); 
+      } 
+      nodeIndex = (nodeIndex + 1) % radialNodes.length; 
+    }, 500); 
+
+    function runFlowSequence() { 
+      const loader = document.getElementById('step-loading'); 
+      const capsules = document.getElementById('step-capsules'); 
+      const welcome = document.getElementById('step-transition'); 
+
+      loader.style.opacity = '1'; 
+      loader.style.display = 'flex'; 
+      capsules.classList.remove('active'); 
+      welcome.classList.remove('active'); 
+
+      setTimeout(() => { 
+        loader.style.opacity = '0'; 
+        capsules.classList.add('active'); 
+
+        setTimeout(() => { 
+          loader.style.display = 'none'; 
+          welcome.classList.add('active'); 
+
+          setTimeout(() => { 
+            welcome.classList.remove('active'); 
+            capsules.classList.remove('active'); 
+          }, 2500); 
+
+        }, 1000); 
+      }, 2500); 
+    } 
+
+    window.addEventListener('DOMContentLoaded', runFlowSequence); 
+    document.getElementById('refresh-btn').addEventListener('click', runFlowSequence); 
+
+    async function loadStatsFromJSON() { 
+      const fallbackData = { posts: "0", following: "29", followers: "341" }; 
+      try { 
+        const res = await fetch('./data.json'); 
+        if (!res.ok) throw new Error("JSON not found"); 
+        const data = await res.json(); 
+        document.getElementById('posts-count').innerText = data.posts || fallbackData.posts; 
+        document.getElementById('following-count').innerText = data.following || fallbackData.following; 
+        document.getElementById('followers-count').innerText = data.followers || fallbackData.followers; 
+      } catch (e) { 
+        document.getElementById('posts-count').innerText = fallbackData.posts; 
+        document.getElementById('following-count').innerText = fallbackData.following; 
+        document.getElementById('followers-count').innerText = fallbackData.followers; 
+      } 
+    } 
+
+    loadStatsFromJSON(); 
+  </script> 
+</body> 
+</html>
